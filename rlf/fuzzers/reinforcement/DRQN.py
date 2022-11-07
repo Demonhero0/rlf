@@ -109,11 +109,7 @@ class DRQN():
 
         self.learn_step_counter = 0
         self.memory_dict = dict()
-        # self.memory_counter = 0
-        # self.memory = np.zeros((MEMORY_CAPACITY, self.state_dim * 2 + 2))
-        # why the NUM_STATE*2 +2
-        # When we store the memory, we put the state, action, reward and next_state in the memory
-        # here reward and action is a number, state is a ndarray
+
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=LR)
         self.loss_func = nn.MSELoss()
 
@@ -126,25 +122,15 @@ class DRQN():
         # print(episole)
         if hidden == None:
             hidden = (Variable(torch.zeros(1, 1, self.eval_net.lstm_i_dim).float().to(device)), Variable(torch.zeros(1, 1, self.eval_net.lstm_i_dim).float().to(device)))
-        # print(obs.device, hidden[0].device)
         if random.random() > episole:
-            # print('agent')
-            # print(obs, hidden)
             action_value, new_hidden = self.eval_net.forward(obs, hidden)
-            # print('action_value',action_value)
             with torch.no_grad():
                 action_value = action_value[0,0].cpu().numpy() - limit_action
-                # print('action_value',action_value)
                 action = np.argmax(action_value)
-            # print('action_value',action_value)
-            # input('stop')
             agent_action_count_array[action] += 1
-            # print(action)
         else:
-            # print('random')
             q, new_hidden = self.eval_net.forward(obs, hidden)
             action = np.random.choice(choices)
-        # print(action, new_hidden)
         return action, new_hidden
 
     def learn(self):
@@ -182,7 +168,6 @@ class DRQN():
 
     def save(self, model_path):
         torch.save(self.eval_net.state_dict(), f'{model_path}/eval_net.pth')
-        # torch.save(self.optimizer.state_dict(), self.directory + 'optimizer.pth')
         print("====================================")
         print("Model DQN has been saved...")
         print("====================================")
@@ -196,9 +181,7 @@ class DRQN():
             else:
                 print('load from cpu')
                 self.eval_net.load_state_dict(torch.load(f'{model_path}/eval_net.pth', map_location=torch.device('cpu')))
-            # self.optimizer.load_state_dict(torch.load(self.directory + 'optimizer.pth'))
-            # self.eval_net.eval()
             print("load model from {}".format(f'{model_path}/eval_net.pth'))
             print("====================================")
-            print("model DQN has been loaded...")
+            print("model DRQN has been loaded...")
             print("====================================")

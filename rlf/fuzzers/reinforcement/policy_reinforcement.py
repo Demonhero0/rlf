@@ -7,9 +7,6 @@ from sklearn.externals import joblib
 import os
 import math
 
-# from .DDPG_RNN import DDPG, device, use_cuda
-# from .DDPG import DDPG, device, use_cuda
-# from .DQN import DQN, device, use_cuda
 from .DRQN import DRQN, device, use_cuda
 
 from ..random import PolicyRandom
@@ -37,11 +34,6 @@ def get_decay(epi_iter):
         decay = 0.2
     return decay
 
-# for function classification
-# centroids = np.loadtxt('k-means-centroids/kmeans-cluster-centers-weight-7.out')
-# kmeans = KMeans(n_clusters=centroids.shape[0], init=centroids, n_init=1, max_iter=1).fit(centroids)
-# classification_list = ['pay-call','nopay-call','pay-nocall','nopay-nocall-load-store','nopay-nocall-load-nostore','nopay-nocall-noload-store','nopay-nocall-noload-nostore']
-# classification_list = ['pay-call','nopay-call','pay-nocall','nopay-nocall-store','nopay-nocall-nostore']
 classification_list = ['pay-call','nopay-call','pay-nocall','nopay-nocall-store','selfdestruct']
 
 class PolicyReinforcement(PolicyBase):
@@ -62,12 +54,7 @@ class PolicyReinforcement(PolicyBase):
 
         self.action_size = ACTION_SIZE
 
-        # todo deal with the state_dim and action_dim
-        # self.ddpg = DDPG(state_dim=100,action_dim=200,hidden_dim=100, max_action=1, recurrent_actor=True, recurrent_critic=True)
-        # self.agent = DQN(state_dim=54, action_dim=5) # classify
         self.agent = DRQN(state_dim=110+ACTION_SIZE, action_dim=self.action_size)
-        # self.dqn_int = DQN_ARG(state_dim=100+2+200+1, action_dim=len(INT_VALUES)+1)
-        # self.dqn = DQN(state_dim=100+2, action_dim=len(erc20_action))
 
         # dqn state
         self.tx_count_dqn = 0
@@ -118,10 +105,6 @@ class PolicyReinforcement(PolicyBase):
             if self.valid_action[contract_name][action]:
                 self.action_choices[contract_name].append(action)
                 self.limit_action[action] = 0
-        
-        # print(self.action_choices[contract_name])
-        # print(self.method_insn_length)
-        # print(self.action_insn_length)
 
     def classification_by_pattern(self, contract_abi):
         classification_dict = dict()
@@ -130,7 +113,6 @@ class PolicyReinforcement(PolicyBase):
         for name in classification_list:
             classification_dict[name] = list()
         for index, name in enumerate(contract_abi['methods']):
-            # print(name, kmeans.predict(np.array([count_function_feature_for_kmeans(method)]))[0])
             method = contract_abi['methods'][name]
             method_name_to_index[name] = index
             index_to_method_name[index] = name
@@ -147,9 +129,7 @@ class PolicyReinforcement(PolicyBase):
                 else:
                     if method['row_bow'][SSTORE] > 0:
                         classification_dict['nopay-nocall-store'].append(name)
-                    # else:
-                    #     classification_dict['nopay-nocall-nostore'].append(name)
-                    # classification_dict['nopay-nocall'].append(name)
+
         valid_action = dict()
         for index, name in enumerate(classification_list):
             valid_action[index] = classification_dict[name]
@@ -200,16 +180,7 @@ class PolicyReinforcement(PolicyBase):
         destruct, executed_insn_coverage, executed_block_coverage = obs.update(logger, False)
         new_insn_coverage, new_block_coverage = obs.stat.get_coverage(tx.contract)
 
-        # add reward
-        # print(new_insn_coverage - old_insn_coverage, new_block_coverage - old_block_coverage)
-        # print(executed_insn_coverage, executed_block_coverage)
         reward = ((new_insn_coverage - old_insn_coverage) + (new_block_coverage - old_block_coverage))
-        # *(1+self.tx_count_dqn/self.max_episode)
-        # reward = 0
-        # if obs.stat.update_bug > 0:
-        #     print(obs.stat.update_bug)
-        # reward += obs.stat.update_bug
-        # obs.stat.update_bug = 0
         x_state, x_method, contract = self.compute_state(obs)
 
         return x_state, reward, np.float(destruct), x_method, contract
@@ -223,20 +194,14 @@ class PolicyReinforcement(PolicyBase):
         else:
             self.slice_size = None
         address = contract.addresses[0]
-        # dqn choose action
-        # action = self.agent.choose_action(x_state, self.valid_action[contract.name], greedy = self.args.mode == 'test')
-        # drqn choose action
+
         action, new_hidden = self.agent.choose_action(x_state, self.action_choices[contract.name], self.limit_action, hidden=hidden, episole=episole, agent_action_count_array=self.agent_action_count_array)
-        # count the action frequency
-        # print(new_hidden)
+
         self.action_count_array[action] += 1
         self.action_trace.append(action)
         pred_f = np.random.choice(self.valid_action[contract.name][action])
         pred_f = self.method_name_to_index[pred_f]
-        # print(obs.stat.tx_count, action, pred_f)
-        # print(pred_f)
-        # choose sender, amount, args randomly
-        # sender, arguments, amount, timestamp = self.policy_random.select_tx_with_method(contract, method, obs)
+
         pred_sender = np.random.choice(len(self.addr_map))
         pred_amount = np.random.choice(len(self.amounts))
 
@@ -280,49 +245,11 @@ class PolicyReinforcement(PolicyBase):
                 # print(last_method_feature.device)
                 last_method_feature = self.compress_net.compress_features(last_method_feature).cpu().numpy()
 
-        # print(last_method_feature)
-        # the frequency of the opcode, static
-        # abi_json = contract.abi.to_json()
-        # for m in contract.abi.methods:
-            # self.method_bows[m.name] = select_opcode_for_RL(m.bow) # size [1,50]
-        # for name, method in abi_json['methods'].items():
-        #     self.method_bows[name] = count_function_feature_for_kmeans(method) # size [1,18]
-
-        # feats is the record features of method
-        # for method, feats in obs.record_manager.get_method_features(contract.name).items():
-        #     method_feats[method] = feats # size [1, 6 + 14]
-
-        # print(method_feats.keys())
-        # action_array_dict = dict()
-        # for action in self.valid_action[contract.name]:
-        #     if self.valid_action[contract.name][action]:
-        #         action_array_dict[action] = np.zeros(17)
-        #         for method_name in self.valid_action[contract.name][action]:
-        #             # print(method_name)
-        #             action_array_dict[action] += np.array(method_feats[method_name])
-        #         action_array_dict[action][1:] = action_array_dict[action][1:]/len(self.valid_action[contract.name][action])
-        #     else:
-        #         action_array_dict[action] = np.zeros(17)
-
-        # action_array = np.zeros(0)
-        # for action in action_array_dict:
-        #     action_array = np.hstack((action_array, action_array_dict[action]))
-
         x_state = self.action_count_array
-        # for method_name in self.method_bows:
-        #     x_state += self.method_bows[method_name]
-        # x_state = x_state/len(self.method_bows)
-        # trace_op_bow = select_opcode_for_RL(obs.trace_bow) # the frequency of 50 most representative opcodes in the logger(last tx) size [1,50]
-        # trace_op_bow = select_trace_opcode(obs.all_trace_bow) # the frequency of 17 most representative opcodes in the logger(last tx) size [1,11]
-        # last_trace_opcode = select_trace_opcode(obs.all_trace_bow)
-        # last_trace_opcode = last_trace_opcode/last_trace_opcode.sum()
         self.trace_bow_accumulative += select_trace_opcode(obs.all_trace_bow)
         trace_op_bow = self.trace_bow_accumulative/self.trace_bow_accumulative.sum() if self.trace_bow_accumulative.sum() > 0 else self.trace_bow_accumulative
 
         x_state = np.hstack((x_state, last_method_feature, trace_op_bow, np.array(obs.stat.get_coverage(contract.name))))
-        # print(x_state)
-        # x_state = np.random.random(45)
-        # print(x_state)
 
         x_method = dict()
         for index, feats in enumerate(method_feats.values()):
@@ -354,12 +281,9 @@ class PolicyReinforcement(PolicyBase):
     def _select_arguments(self, contract, method, sender, obs, x_state, x_method):
 
         arguments, addr_args, int_args = [], [], []
-        # int_state = np.zeros(self.dqn_int.state_dim)
         for arg in method.inputs:
             t = arg.evm_type.t
             if t == SolType.IntTy or t == SolType.UintTy:
-                # chosen_int = np.random.choice(len(self.int_values)+1)
-                # int_args.append(chosen_int)
                 if t == SolType.IntTy:
                     arguments.append(self._select_int(contract, method, arg.evm_type.size, obs, None))
                 elif t == SolType.UintTy:
@@ -389,12 +313,6 @@ class PolicyReinforcement(PolicyBase):
         return arguments, addr_args, int_args
 
     def _select_int(self, contract, method, size, obs, chosen_int=None):
-        # if chosen_int is not None and chosen_int != len(self.int_values):
-        #     value = self.int_values[chosen_int]
-        #     value &= ((1 << size) - 1)
-        #     if value & (1 << (size - 1)):
-        #         value -= (1 << size)
-        #     return value
         s = random.random()
         if s < 0.9:
             value = random.choice(self.int_values_frequent)
@@ -410,13 +328,6 @@ class PolicyReinforcement(PolicyBase):
         return value
 
     def _select_uint(self, contract, method, size, obs, chosen_int=None):
-        # if chosen_int is not None and chosen_int != len(self.int_values):
-        #     value = self.int_values[chosen_int]
-        #     value &= ((1 << size) - 1)
-        #     return value
-
-        # p = 1 << size
-        # return random.randint(0, p-1)
         s = random.random()
         if s < 0.9:
             value = random.choice(self.int_values_frequent)
@@ -463,11 +374,7 @@ class PolicyReinforcement(PolicyBase):
 
         for _ in range(size):
             if t in (SolType.IntTy, SolType.UintTy):
-                # s = random.random()
-                # if s >= INT_EXPLORE_RATE:
-                #     # TODO select int
-                #     chosen_int = np.random.choice(len(self.int_values)+1)
-                # else:
+
                 chosen_int = None
 
                 if t == SolType.IntTy:

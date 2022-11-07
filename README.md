@@ -1,6 +1,17 @@
 # RLF
 
+RLF is an vulnerability guided fuzzers for smart contracts based on reinforcement learning. For more details, please refer to [RLF ASE'22 paper](https://github.com/Demonhero0/rlf/paper/rlf_ase22.pdf).
+
 ## Setup
+
+### Docker
+
+We provide the docker image. Users can pull this image and create a containier, the code is in "/rlf".
+```
+docker pull damonhero/rlf:latest
+```
+
+
 
 ### Manually
 
