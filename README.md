@@ -1,6 +1,6 @@
 # RLF
 
-RLF is an vulnerability guided fuzzers for smart contracts based on reinforcement learning. For more details, please refer to [RLF ASE'22 paper](https://github.com/Demonhero0/rlf/paper/rlf_ase22.pdf).
+RLF is an vulnerability guided fuzzers for smart contracts based on reinforcement learning. For more details, please refer to [RLF ASE'22 paper](https://github.com/Demonhero0/rlf/blob/main/paper/rlf_ase22.pdf).
 
 ## Setup
 
