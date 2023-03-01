@@ -1,6 +1,6 @@
 # RLF
 
-RLF is an vulnerability guided fuzzers for smart contracts based on reinforcement learning. For more details, please refer to [RLF ASE'22 paper](https://github.com/Demonhero0/rlf/blob/main/paper/rlf_ase22.pdf).
+RLF is an vulnerability guided fuzzers for smart contracts based on reinforcement learning. For more details, please refer to [RLF ASE'22 paper](https://dl.acm.org/doi/abs/10.1145/3551349.3560429).
 
 ## Setup
 
@@ -76,8 +76,38 @@ $ sudo mv solc-static-linux /usr/bin/solc
 
 ## Usage
 
-### Fuzzing example
+### Preparation
+
+To prepare the input of fuzzing, one needs to provide a Truffle project (formatted as the example in "example/crowdsale"). Then the script "script/extract.py" should be called to extract deployment transactions of the contracts. For the example contract, the script runs as follows:
+
+```
+$ rm example/crowdsale/transactions.json
+$ python3 script/extract.py --proj example/crowdsale/ --port 8545
+```
+Note that you need to kill existing ganache-cli processes listening the same port before calling this script.
+
+### Fuzzing
 
 ```
 python3 -m rlf --proj example/crowdsale/ --contract Crowdsale --fuzzer reinforcement --limit 2000 --reward cov+bugs --mode test
+```
+
+### Citing RLF
+```
+@inproceedings{10.1145/3551349.3560429,
+author = {Su, Jianzhong and Dai, Hong-Ning and Zhao, Lingjun and Zheng, Zibin and Luo, Xiapu},
+title = {Effectively Generating Vulnerable Transaction Sequences in Smart Contracts with Reinforcement Learning-Guided Fuzzing},
+year = {2023},
+isbn = {9781450394758},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3551349.3560429},
+doi = {10.1145/3551349.3560429},
+booktitle = {Proceedings of the 37th IEEE/ACM International Conference on Automated Software Engineering},
+articleno = {36},
+numpages = {12},
+keywords = {Fuzzing, Smart contract, Reinforcement learning},
+location = {Rochester, MI, USA},
+series = {ASE '22}
+}
 ```
