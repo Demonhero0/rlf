@@ -1,11 +1,11 @@
 pycryptodome>=3.4.7
 pysha3>=1.0.1
-graphviz
-numpy
-torch
-tqdm
+graphviz==0.18.2
+numpy==1.21.4
+torch==1.13.0
+tqdm==4.62.3
 scikit-learn==0.22.1
-persistent
+persistent==4.7.0
 rlp==1.0.1
 ethereum
 web3
