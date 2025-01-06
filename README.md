@@ -43,7 +43,7 @@ $ cd $GOPATH/src/github.com/ethereum
 $ git clone https://github.com/ethereum/go-ethereum.git
 $ cd go-ethereum
 $ git checkout 86be91b3e2dff5df28ee53c59df1ecfe9f97e007
-$ git apply $GOPATH/src/RLF_Artifacts/script/patch.geth
+$ git apply $GOPATH/src/rlf/script/patch.geth
 ```
 
 Install python dependencies:

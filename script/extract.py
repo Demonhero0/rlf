@@ -93,7 +93,7 @@ def extract_transactions():
         generate_the_migrations(fuzz_contract=args.fuzz_contract)
 
     subprocess.call('truffle deploy', shell=True)
-    extract_js_path = os.path.join(os.environ['GOPATH'], 'src', 'ilf', 'script', 'extract.js')
+    extract_js_path = os.path.join(os.environ['GOPATH'], 'src', 'rlf', 'script', 'extract.js')
     subprocess.call('truffle exec {}'.format(extract_js_path), shell=True)
 
 def generate_the_migrations(fuzz_contract):
